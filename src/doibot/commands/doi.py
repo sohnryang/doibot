@@ -81,7 +81,12 @@ class DoiPreview(commands.Cog):
                             name_parts.append(author["family"])
                         if name_parts:
                             author_list.append(" ".join(name_parts))
-                    authors = ", ".join(author_list) if author_list else "N/A"
+
+                    if len(author_list) > 10:
+                        display_authors = author_list[:10]
+                        authors = ", ".join(display_authors) + ", et al."
+                    else:
+                        authors = ", ".join(author_list) if author_list else "N/A"
 
                 abstract = message.get("abstract", "No abstract available.")
                 if abstract.startswith("<jats:p>"):  # Remove JATS XML tags if present
