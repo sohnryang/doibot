@@ -1,7 +1,10 @@
 import os
+import logging
 
 import discord
 from discord.ext import commands
+
+logger = logging.getLogger(__name__)
 
 
 class MyBot(commands.Bot):
@@ -29,17 +32,14 @@ class MyBot(commands.Bot):
         if not self.synced:
             await self.tree.sync()
             self.synced = True
-        print(f"Logged in as {self.user} (ID: {self.user.id})")
-        print("------")
+        logger.info(f"Logged in as {self.user} (ID: {self.user.id})")
 
 
 async def main():
+    discord.utils.setup_logging()
     token = os.getenv("DISCORD_TOKEN")
     if token is None:
-        print("Error: DISCORD_TOKEN environment variable not set.")
-        print(
-            "Please set the DISCORD_TOKEN environment variable with your bot's token."
-        )
+        logger.error("Error: DISCORD_TOKEN environment variable not set.")
         return
 
     bot = MyBot()
