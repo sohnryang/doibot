@@ -1,0 +1,8 @@
+services:
+  doibot:
+    build: .
+    env_file:
+      - .env
+    environment:
+      - CROSSREF_API=${CROSSREF_API:-https://api.crossref.org}
+    restart: unless-stopped
