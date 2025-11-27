@@ -7,7 +7,9 @@ authors = [
     { name = "Ryang Sohn", email = "loop.infinitely@gmail.com" }
 ]
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "discord-py>=2.6.4",
+]
 
 [project.scripts]
 doibot = "doibot:main"
@@ -15,3 +17,9 @@ doibot = "doibot:main"
 [build-system]
 requires = ["uv_build>=0.9.0,<0.10.0"]
 build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "dpytest>=0.7.0",
+    "pytest>=9.0.1",
+]
