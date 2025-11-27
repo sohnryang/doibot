@@ -1,6 +1,6 @@
 import asyncio
 
-from src.doibot.bot import main as bot_main
+from doibot.bot import main as bot_main
 
 
 def main() -> None:

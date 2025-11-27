@@ -15,7 +15,7 @@ class MyBot(commands.Bot):
         super().__init__(
             command_prefix=commands.when_mentioned_or("!"), intents=intents
         )
-        self.initial_extensions = ["src.doibot.commands.greet"]
+        self.initial_extensions = ["doibot.commands.greet"]
         self.synced = False  # To check if commands have been synced
 
     async def setup_hook(self):
