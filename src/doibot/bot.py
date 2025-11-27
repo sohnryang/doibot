@@ -1,5 +1,5 @@
-import os
 import logging
+import os
 
 import discord
 from discord.ext import commands
@@ -18,7 +18,7 @@ class MyBot(commands.Bot):
         super().__init__(
             command_prefix=commands.when_mentioned_or("!"), intents=intents
         )
-        self.initial_extensions = ["doibot.commands.greet"]
+        self.initial_extensions = ["doibot.commands.doi"]
         self.synced = False  # To check if commands have been synced
 
     async def setup_hook(self):
