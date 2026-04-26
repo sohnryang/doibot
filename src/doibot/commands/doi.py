@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 import urllib.parse
 
 import discord
@@ -8,6 +9,53 @@ from discord import app_commands
 from discord.ext import commands
 
 logger = logging.getLogger(__name__)
+
+# Maps HTML/JATS tag names (without namespace) to Discord markdown delimiters.
+_FORMATTING_TAGS = {
+    "i": "*",
+    "em": "*",
+    "italic": "*",
+    "b": "**",
+    "strong": "**",
+    "bold": "**",
+    "u": "__",
+    "underline": "__",
+    "s": "~~",
+    "strike": "~~",
+    "del": "~~",
+}
+
+_TAG_RE = re.compile(r"</?\s*(?:[a-zA-Z][a-zA-Z0-9]*:)?([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>")
+
+
+def _normalize(text: str) -> str:
+    # Crossref titles often wrap inline tags with newlines + indentation.
+    # Whitespace just after a closing tag is mid-word continuation and should
+    # be stripped; whitespace before any tag is collapsed to a single space.
+    text = re.sub(r"(</[^>]+>)\s*\n\s*", r"\1", text)
+    text = re.sub(r"\s*\n\s*", " ", text)
+    return re.sub(r"[ \t]+", " ", text).strip()
+
+
+def _html_to_markdown(text: str) -> str:
+    """Convert simple HTML/JATS formatting tags to Discord markdown; drop others."""
+    text = _normalize(text)
+
+    def replace(match: re.Match) -> str:
+        return _FORMATTING_TAGS.get(match.group(1).lower(), "")
+
+    return _TAG_RE.sub(replace, text)
+
+
+def _strip_html(text: str) -> str:
+    """Strip all HTML/JATS tags (Discord embed titles don't render markdown)."""
+    return _TAG_RE.sub("", _normalize(text))
+
+
+def _has_formatting(text: str) -> bool:
+    return any(
+        m.group(1).lower() in _FORMATTING_TAGS for m in _TAG_RE.finditer(text)
+    )
 
 
 class DoiPreview(commands.Cog):
@@ -41,8 +89,12 @@ class DoiPreview(commands.Cog):
                 data = response.json()
                 message = data.get("message", {})
 
-                title = (
+                raw_title = (
                     message.get("title", ["N/A"])[0] if message.get("title") else "N/A"
+                )
+                title = _strip_html(raw_title)
+                formatted_title = (
+                    _html_to_markdown(raw_title) if _has_formatting(raw_title) else None
                 )
 
                 container_title = "N/A"
@@ -88,9 +140,9 @@ class DoiPreview(commands.Cog):
                     else:
                         authors = ", ".join(author_list) if author_list else "N/A"
 
-                abstract = message.get("abstract", "No abstract available.")
-                if abstract.startswith("<jats:p>"):  # Remove JATS XML tags if present
-                    abstract = abstract.replace("<jats:p>", "").replace("</jats:p>", "")
+                abstract = _html_to_markdown(
+                    message.get("abstract", "No abstract available.")
+                )
 
                 # Truncation logic
                 TRUNCATE_LIMIT = 300
@@ -98,6 +150,9 @@ class DoiPreview(commands.Cog):
 
                 if len(abstract) > TRUNCATE_LIMIT:
                     description = abstract[:TRUNCATE_LIMIT].rsplit(" ", 1)[0] + "..."
+
+                if formatted_title:
+                    description = f"**{formatted_title}**\n\n{description}"
 
                 embed = discord.Embed(
                     title=title,
