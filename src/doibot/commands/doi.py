@@ -47,17 +47,6 @@ def _html_to_markdown(text: str) -> str:
     return _TAG_RE.sub(replace, text)
 
 
-def _strip_html(text: str) -> str:
-    """Strip all HTML/JATS tags (Discord embed titles don't render markdown)."""
-    return _TAG_RE.sub("", _normalize(text))
-
-
-def _has_formatting(text: str) -> bool:
-    return any(
-        m.group(1).lower() in _FORMATTING_TAGS for m in _TAG_RE.finditer(text)
-    )
-
-
 class DoiPreview(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
@@ -92,10 +81,7 @@ class DoiPreview(commands.Cog):
                 raw_title = (
                     message.get("title", ["N/A"])[0] if message.get("title") else "N/A"
                 )
-                title = _strip_html(raw_title)
-                formatted_title = (
-                    _html_to_markdown(raw_title) if _has_formatting(raw_title) else None
-                )
+                title = _html_to_markdown(raw_title)
 
                 container_title = "N/A"
                 if message.get("container-title"):
@@ -151,12 +137,9 @@ class DoiPreview(commands.Cog):
                 if len(abstract) > TRUNCATE_LIMIT:
                     description = abstract[:TRUNCATE_LIMIT].rsplit(" ", 1)[0] + "..."
 
-                if formatted_title:
-                    description = f"**{formatted_title}**\n\n{description}"
+                description = f"[**{title}**](https://doi.org/{doi})\n\n{description}"
 
                 embed = discord.Embed(
-                    title=title,
-                    url=f"https://doi.org/{doi}",
                     description=description,
                     color=discord.Color.blue(),
                 )
